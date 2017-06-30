@@ -1,10 +1,10 @@
- ############################
+############################
 ## D Morris and M Whittle ##
 ## New User Script v1.3   ##
 ##  2/6/2017 Branch 3     ##
 ############################
 
-　
+
 ##v1.1 Exchange online mailbox based on profiles location only.  
 ##     Email address in the email report.
 #region
@@ -16,7 +16,7 @@ $date=get-date -format "dd-MM-yyyy hh:mm tt"
 $Logfilepath="M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\Log\new_users.log"
 $ErrorLogfilepath="M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\Log\usererror.log"
 
-　
+
 #Map M drive if not mapped
  if (!(Get-PSDrive -Name "M"))
     {
@@ -50,7 +50,7 @@ Function LogWrite
         Add-content $Logfilepath -value $logstring -PassThru
     }
 
-　
+
 #clear the output variables
 $output = ""
 $usererror = ""
@@ -69,7 +69,7 @@ $Output = $output +"<head>
         --> 
         </STYLE>
 
-　
+
         </head>
         <body bgcolor='grey' align='center' width='100%' >
         <table bgcolor='white' align='center' width='99%' height='100%' border='0'>
@@ -79,8 +79,8 @@ $Output = $output +"<head>
         <tr height='20'><td bgcolor='#BBD723' align='center' colspan='6'> <b> The following users were created</b></td></tr> 
         <tr><td><b>Given Name</b></td><td><b>Surname</b></td><td><b> Job Title </b><td><b>  Username </b><td><b>Email Address</b></td><td><b>Password </b></td></tr> "
 
-　
-　
+
+
 #function to test for email address existence in nottinghamcity.gov.uk as a proxy address in AD
 function Get-EmailAddressTest
     {
@@ -144,7 +144,17 @@ foreach($newuser in $new_users)
     #Create variables as some cmdlets do not allow script block substitution
     $manager = $newuser.Manager 
     $country ="GB"
-    $manager = get-aduser $newuser.Manager
+    #Try to get managers AD object
+    try
+        {
+            $manager = get-aduser $newuser.Manager
+        }
+    catch
+        {
+            logwrite "Creation of new user $($Name) failed because managers AD object canot be resolved"
+            exit
+        }
+        
     $profile = get-aduser $newuser.profile -properties *
     $expiry = $null
     $changepw = $null
@@ -330,6 +340,7 @@ foreach($newuser in $new_users)
                 }
          
             #endregion
+            #if (!($newuser.error)){write-host "New user error so exiting";exit}
 
             #Sets attribute for manual pin for followme Printing
             if (!($newuser.error))
@@ -363,7 +374,7 @@ foreach($newuser in $new_users)
                     set-aduser $samaccountname -AccountExpirationDate $expiry
                 }
             #If account is flagged as password must not be changed at first logon then deactivate requirement
-            if ($changepw)
+            if ($changepw -ne "yes")
                 {
                     LogWrite "Account $($Name) is marked as password must not be changed at first logon so deactivating requirement"
                     set-aduser $samaccountname -ChangePasswordAtLogon $false
@@ -377,7 +388,7 @@ foreach($newuser in $new_users)
         #Create list of Security groups that has a data owner so these can be added to the email report for 1st line to contact
         $GrpDataOwnerChecks = $GrpmbmProfile |Where-Object {(Get-ADGroup -Filter {name -eq $_.Name} -Properties info|select info) -match "owner"}
 
-　
+
         #create array of sensitive groups referenced by the Service Desk new user document
         $sensitivegroups = "all_localadmin","heads of service","directors","g.xenapp.CAG_Users","Business Support Colleagues","resources Leadership Team",`
         "it email list","business support colleagues","g.xenapp.CAG_Exception","it eitlt","it itlt","BME Staff","LGBT Group","Project Std","Project Pro",`
@@ -505,8 +516,8 @@ if ($usererror)
         $usererror |Out-File "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\Log\usererror.log"
     }
 
-　
-　
+
+
 #send email if any users were created
 If($neus -gt 0) 
     {
@@ -528,4 +539,4 @@ If($neus -gt 0)
             }
     }
     
-$output=$null 
+#$output=$null
