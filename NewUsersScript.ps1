@@ -32,9 +32,11 @@ if (!(Test-Path $LogFilePath))
 else
     {
     #Make a copy of the existing log file
-    copy-Item "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\Log\new_users.log"
-    "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\Log\new_users_$date.log"
+    $copydate = Get-Date -Format "ddMMyy"
+    copy-Item -path "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\Log\new_users.log" -destination "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\Log\new_users_$copydate.log"
+    Remove-Item -Path "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\Log\new_users.log"
     }
+
 ## create error logfile
 if (!(Test-Path $ErrorLogFilePath))
     {
@@ -142,7 +144,9 @@ foreach($newuser in $new_users)
     #endregion
     
     #Create variables as some cmdlets do not allow script block substitution
-    $manager = $newuser.Manager 
+    $manager = $newuser.Manager
+    $newusers = $null
+    $new_user=$null
     $country ="GB"
     #Try to get managers AD object
     try
@@ -227,21 +231,22 @@ foreach($newuser in $new_users)
         $Count = $null
                     
         #loop to find unique $object        
-        while (Get-ADObject -Properties mail, proxyAddresses , userprincipalname -Filter "mail -like '*$object*' -or proxyAddresses -like '*$object*' -or userprincipalname -like '*$object*'")
+           while (Get-ADObject -Properties mail, proxyAddresses , userprincipalname -Filter "mail -like '*$object*' -or proxyAddresses -like '*$object*' -or userprincipalname -like '*$object*'")
             {
                 #The uniqueness check failed, add +1 to count and try again
                 $Count++
                 if ($Count -eq $object.Length)
                     {
-                        logwrite "Username uniqueness failure. Please create AD account manually" ; Add-Member -InputObject $newuser -Name "Error" -MemberType NoteProperty -Value "logon name creation uniqueness fail"
+                        logwrite "Username uniqueness failure. Please create AD account manually"
                         break
                     }
-                    if ($Count -gt 1)
+                if ($Count -gt 0)
                     {
                         $prefix = $object -split "@"
-                        $username=$prefix[0]+$Count
-                        $object= $username+"@"+$profilers_maildomain[1]
+                        $username=$logonname+$Count
+                        $object= $username+"@"+$prefix[1]
                     }
+                
             }
         
                     
@@ -343,8 +348,7 @@ foreach($newuser in $new_users)
             #if (!($newuser.error)){write-host "New user error so exiting";exit}
 
             #Sets attribute for manual pin for followme Printing
-            if (!($newuser.error))
-                {
+           
                     try
                         {
                         $Rand = Get-Random -Minimum 1000 -Maximum 9999
@@ -364,10 +368,9 @@ foreach($newuser in $new_users)
                     Set-aduser $SamAccountName -ScriptPath $RHEBat
                 }  
             #Output password to log file
-            if (!($newuser.Error))
-            {
+         
                 logwrite "Password for user $($Name) is $Password`n"
-            }
+            
             if ($expiry)
                 {
                     LogWrite "Account $($Name) is a temporary account so setting expiry date to $($Expiry)"
@@ -507,7 +510,7 @@ foreach($newuser in $new_users)
                     }
             }
 
-        }
+        
     
 
 #If any errors then create error log and attach to email
