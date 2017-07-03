@@ -106,7 +106,7 @@ function Get-EmailAddressTest
     }
 
 #Import .csv
-$new_users=Import-Csv "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\NewUserScript\usercreationfile.csv"
+$new_users=Import-Csv "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\NewUserScript\usercreationfile_sc.csv"
 
 #null input data variable
 $newuser=$null
@@ -419,7 +419,7 @@ foreach($newuser in $new_users)
                             {
                                 $ErrorMessage = $_.Exception.Message
                                 $FailedItem = $_.Exception.ItemName
-                                logwrite "Unable to add user named $($newuser.Name) to AD security group $($item_innerloop.name) because $ErrorMessage"
+                                logwrite "Unable to add user named $($name) to AD security group $($item_innerloop.name) because $ErrorMessage"
                             }
                     }
                
