@@ -106,7 +106,7 @@ function Get-EmailAddressTest
     }
 
 #Import .csv
-$new_users=Import-Csv "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\NewUserScript\usercreationfile_sc.csv"
+$new_users=Import-Csv "M:\IT\IT Teams\I.T. Technical Services Support\Projects\Ofice 365 - Mailbox Migrations\NewUserScript\usercreationfile.csv"
 
 #null input data variable
 $newuser=$null
@@ -542,4 +542,4 @@ If($neus -gt 0)
             }
     }
     
-#$output=$null
+$output=$null
